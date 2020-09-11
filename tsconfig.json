@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "importHelpers": true,
+    "module": "commonjs",
+    "noImplicitAny": true,
+    "noUnusedLocals": false,
+    "outDir": "dist",
+    "removeComments": true,
+    "resolveJsonModule": true,
+    "rootDir": "src",
+    "skipLibCheck": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "target": "es2019"
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}
