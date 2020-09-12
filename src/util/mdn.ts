@@ -1,67 +1,68 @@
 import axios from 'axios';
-import cheerio from 'cheerio';
+import Cheerio from 'cheerio';
+import URL from 'url';
+import Turndown from 'turndown';
 
 export default class MDN {
   public static async search(query: string) {
     const { data } = await axios.get<string>('https://developer.mozilla.org/en-US/search', {
-      params: {
-        q: encodeURIComponent(query),
-      },
+      params: { q: encodeURIComponent(query) },
     });
-    const $ = cheerio.load(data);
+    const $ = Cheerio.load(data);
 
-    const results: {
-      title: string;
-      url: string;
-    }[] = $('div.result > div > a.result-title').map((_, e) => ({
+    const results: { title: string, url: string }[] = $('div.result > div > a.result-title').map((_, e) => ({
       name: $(e).text(),
-      url: `https://developer.mozilla.org${$(e).attr('href')}`,
-    })).get().filter(({ url }) => url.includes('Web/JavaScript/Reference'));
-
-    const exact = results.length > 1
-      ? results.find(({ url }) => url.toLowerCase().endsWith(query.toLowerCase()))
-      : results[0];
-    if (exact) return MDN.getInfo(exact.url);
+      url: $(e).attr('href'),
+    }))
+      .get()
+      .filter(({ name, url }) => url.includes('Web/JavaScript/Reference') && !name.startsWith('Warning: '));
 
     return results;
   }
 
-  public static async getInfo(url: string) {
-    const { data } = await axios.get<string>(url);
-    const $ = cheerio.load(data);
+  public static async getInfo(link: string) {
+    let parsedURL = link;
+    if (!URL.parse(link).hostname) parsedURL = `https://developer.mozilla.org${link}`;
+    const { data, status } = await axios.get<string>(parsedURL);
+    if (status !== 200) return false;
 
-    const syntax = $('#wikiArticle > pre.syntaxbox.notranslate').text();
+    const $ = Cheerio.load(data);
+    const tn = new Turndown();
+
     const name = $('#react-container > main > header > div.titlebar-container > div > h1').text();
-    const description = $('#wikiArticle > p:nth-child(12)').text();
-    const examples = $('#wikiArticle > pre:nth-child(19) > code').html();
-    const parameters = MDN.resolveParameters($('#wikiArticle > dl').text().split('\n'));
-    const returns = $('#wikiArticle > p:nth-child(10)').text();
+
+    if (!/global_objects\/[\w\d-_]+(?:\/)?$/i.test(parsedURL)) {
+      const description = MDN.toMarkdown($('#wikiArticle > p:nth-child(12)'), tn);
+      const parameters = MDN.toMarkdown($('#wikiArticle > dl'), tn);
+      const returns = MDN.toMarkdown($('#wikiArticle > p:nth-child(10)'), tn);
+      const syntax = MDN.toMarkdown($('#wikiArticle > pre.syntaxbox.notranslate'), tn);
+
+      return {
+        description,
+        name,
+        parameters,
+        returns,
+        syntax,
+        url: parsedURL,
+      };
+    }
+
+    const description = MDN.toMarkdown($('#wikiArticle > p:nth-child(4)'), tn);
+    const parameters = MDN.toMarkdown($('#wikiArticle > dl'), tn);
+    const syntax = MDN.toMarkdown($('#wikiArticle > pre.syntaxbox.notranslate'), tn);
 
     return {
       description,
-      examples,
       name,
       parameters,
-      returns,
       syntax,
-      url,
+      url: parsedURL,
     };
   }
 
-  private static resolveParameters(parameters: string[]) {
-    parameters = parameters.map((p) => p.trim()).filter((p) => p !== '');
-
-    const result = [];
-    for (let i = 0; i < parameters.length; i++) {
-      if (i % 2 === 0) {
-        result.push({
-          name: parameters[i].split(' ')[0],
-          optional: parameters[i].split(' ').length > 1,
-          description: parameters[++i],
-        });
-      }
-    }
-
-    return result;
+  private static toMarkdown(sel: Cheerio, tn: Turndown) {
+    const html = sel.html();
+    if (html) return tn.turndown(html);
+    return sel.text();
   }
 }
