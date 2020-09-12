@@ -1,22 +1,14 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "importHelpers": true,
     "module": "commonjs",
+    "target": "esnext",
+    "lib": ["dom", "es2015", "webworker"],
+    "jsx": "react",
     "noImplicitAny": true,
-    "noUnusedLocals": false,
-    "outDir": "dist",
-    "removeComments": true,
-    "resolveJsonModule": true,
-    "rootDir": ".",
-    "skipLibCheck": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "target": "es2019"
+    "preserveConstEnums": true,
+    "outDir": "./dist",
+    "moduleResolution": "node",
+    "esModuleInterop": true
   },
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src/*.ts", "src/**/*.ts", "src/*.tsx", "src/**/*.tsx"]
 }

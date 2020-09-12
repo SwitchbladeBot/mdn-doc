@@ -1,41 +1,40 @@
-import axios from 'axios';
-import Cheerio from 'cheerio';
-import URL from 'url';
-import Turndown from 'turndown';
+import axios from 'axios'
+import Cheerio from 'cheerio'
+import Turndown from 'turndown'
 
 export default class MDN {
-  public static async search(query: string) {
+  public static async search (query: string) {
     const { data } = await axios.get<string>('https://developer.mozilla.org/en-US/search', {
-      params: { q: encodeURIComponent(query) },
-    });
-    const $ = Cheerio.load(data);
+      params: { q: encodeURIComponent(query) }
+    })
+    const $ = Cheerio.load(data)
 
     const results: { title: string, url: string }[] = $('div.result > div > a.result-title').map((_, e) => ({
       name: $(e).text(),
-      url: $(e).attr('href'),
+      url: $(e).attr('href')
     }))
       .get()
-      .filter(({ name, url }) => url.includes('Web/JavaScript/Reference') && !name.startsWith('Warning: '));
+      .filter(({ name, url }) => url.includes('Web/JavaScript/Reference') && !name.startsWith('Warning: '))
 
-    return results;
+    return results
   }
 
-  public static async getInfo(link: string) {
-    let parsedURL = link;
-    if (!URL.parse(link).hostname) parsedURL = `https://developer.mozilla.org${link}`;
-    const { data, status } = await axios.get<string>(parsedURL);
-    if (status !== 200) return false;
+  public static async getInfo (link: string) {
+    let parsedURL = link
+    if (new URL(link).hostname) parsedURL = `https://developer.mozilla.org${link}`
+    const { data, status } = await axios.get<string>(parsedURL)
+    if (status !== 200) return false
 
-    const $ = Cheerio.load(data);
-    const tn = new Turndown();
+    const $ = Cheerio.load(data)
+    const tn = new Turndown()
 
-    const name = $('#react-container > main > header > div.titlebar-container > div > h1').text();
+    const name = $('#react-container > main > header > div.titlebar-container > div > h1').text()
 
     if (!/global_objects\/[\w\d-_]+(?:\/)?$/i.test(parsedURL)) {
-      const description = MDN.toMarkdown($('#wikiArticle > p:nth-child(12)'), tn);
-      const parameters = MDN.toMarkdown($('#wikiArticle > dl'), tn);
-      const returns = MDN.toMarkdown($('#wikiArticle > p:nth-child(10)'), tn);
-      const syntax = MDN.toMarkdown($('#wikiArticle > pre.syntaxbox.notranslate'), tn);
+      const description = MDN.toMarkdown($('#wikiArticle > p:nth-child(12)'), tn)
+      const parameters = MDN.toMarkdown($('#wikiArticle > dl'), tn)
+      const returns = MDN.toMarkdown($('#wikiArticle > p:nth-child(10)'), tn)
+      const syntax = MDN.toMarkdown($('#wikiArticle > pre.syntaxbox.notranslate'), tn)
 
       return {
         description,
@@ -43,26 +42,26 @@ export default class MDN {
         parameters,
         returns,
         syntax,
-        url: parsedURL,
-      };
+        url: parsedURL
+      }
     }
 
-    const description = MDN.toMarkdown($('#wikiArticle > p:nth-child(4)'), tn);
-    const parameters = MDN.toMarkdown($('#wikiArticle > dl'), tn);
-    const syntax = MDN.toMarkdown($('#wikiArticle > pre.syntaxbox.notranslate'), tn);
+    const description = MDN.toMarkdown($('#wikiArticle > p:nth-child(4)'), tn)
+    const parameters = MDN.toMarkdown($('#wikiArticle > dl'), tn)
+    const syntax = MDN.toMarkdown($('#wikiArticle > pre.syntaxbox.notranslate'), tn)
 
     return {
       description,
       name,
       parameters,
       syntax,
-      url: parsedURL,
-    };
+      url: parsedURL
+    }
   }
 
-  private static toMarkdown(sel: Cheerio, tn: Turndown) {
-    const html = sel.html();
-    if (html) return tn.turndown(html);
-    return sel.text();
+  private static toMarkdown (sel: Cheerio, tn: Turndown) {
+    const html = sel.html()
+    if (html) return tn.turndown(html)
+    return sel.text()
   }
 }
