@@ -25,6 +25,7 @@ async function handleRequest (request: Request) {
     if (!query) return handleJSONResponse({ message: 'You need to pass the search query using the q parameter' }, 400)
 
     const data = await mdn.search(query)
+    console.log(data)
     if (!Array.isArray(data) || !data.length) return handleJSONResponse({ message: 'Could not find anything' }, 404)
 
     return handleJSONResponse(data)
