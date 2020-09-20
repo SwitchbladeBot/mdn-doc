@@ -1,13 +1,10 @@
-import axios from 'axios'
 import Cheerio from 'cheerio'
 import Turndown from 'turndown'
 
 export default class MDN {
   public static async search (query: string) {
-    const { data } = await axios.get<string>('https://developer.mozilla.org/en-US/search', {
-      params: { q: encodeURIComponent(query) }
-    })
-    const $ = Cheerio.load(data)
+    const res = await fetch(`https://developer.mozilla.org/en-US/search?q=${encodeURIComponent(query)}`)
+    const $ = Cheerio.load(await res.text())
 
     const results: { title: string, url: string }[] = $('div.result > div > a.result-title').map((_, e) => ({
       name: $(e).text(),
@@ -22,10 +19,10 @@ export default class MDN {
   public static async getInfo (link: string) {
     let parsedURL = link
     if (new URL(link).hostname) parsedURL = `https://developer.mozilla.org${link}`
-    const { data, status } = await axios.get<string>(parsedURL)
-    if (status !== 200) return false
+    const res = await fetch(parsedURL)
+    if (res.status !== 200) return false
 
-    const $ = Cheerio.load(data)
+    const $ = Cheerio.load(await res.text())
     const tn = new Turndown()
 
     const name = $('#react-container > main > header > div.titlebar-container > div > h1').text()

@@ -1,5 +1,5 @@
 import Router from './router'
-import mdn from '../util/mdn'
+import mdn from './util/mdn'
 
 addEventListener('fetch', (event: FetchEvent) => {
   event.respondWith(handleRequest(event.request))
