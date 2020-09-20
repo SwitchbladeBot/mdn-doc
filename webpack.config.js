@@ -5,6 +5,8 @@ module.exports = {
     bundle: path.join(__dirname, 'src', 'index.ts'),
   },
 
+  target: 'webworker',
+
   output: {
     filename: 'bundle.js',
     path: path.join(__dirname, 'dist'),
