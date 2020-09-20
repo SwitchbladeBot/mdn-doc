@@ -12,7 +12,7 @@ module.exports = {
     path: path.join(__dirname, 'dist'),
   },
 
-  mode: process.env.NODE_ENV || 'development',
+  mode: process.env.NODE_ENV || 'production',
 
   watchOptions: {
     ignored: /node_modules|dist|\.js/g,
