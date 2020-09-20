@@ -1,4 +1,3 @@
-import Router from './router'
 import mdn from './util/mdn'
 
 addEventListener('fetch', (event: FetchEvent) => {
@@ -15,32 +14,29 @@ function handleJSONResponse (response: any, status = 200) {
 }
 
 async function handleRequest (request: Request) {
-  const r = new Router()
-  const { searchParams } = new URL(request.url)
+  const { pathname, searchParams } = new URL(request.url)
 
-  r.get('/', () => handleJSONResponse({ message: 'Hello World!' }))
+  switch (pathname) {
+    case '/search': {
+      const query = searchParams.get('q')
+      if (!query) return handleJSONResponse({ message: 'You need to pass the search query using the q parameter' }, 400)
 
-  r.get('/search', async () => {
-    const query = searchParams.get('q')
-    if (!query) return handleJSONResponse({ message: 'You need to pass the search query using the q parameter' }, 400)
+      const data = await mdn.search(query)
+      if (!Array.isArray(data) || !data.length) return handleJSONResponse({ message: 'Could not find anything' }, 404)
 
-    const data = await mdn.search(query)
-    console.log(data)
-    if (!Array.isArray(data) || !data.length) return handleJSONResponse({ message: 'Could not find anything' }, 404)
+      return handleJSONResponse(data)
+    }
+    case '/info': {
+      const link = searchParams.get('l')
+      if (!link) return handleJSONResponse({ message: 'You need to pass the link query using the l parameter' }, 400)
 
-    return handleJSONResponse(data)
-  })
+      const data = await mdn.getInfo(link)
+      if (!data) return handleJSONResponse({ message: 'The link you inputted was not valid' }, 400)
 
-  r.get('/info', async () => {
-    const link = searchParams.get('l')
-    if (!link) return handleJSONResponse({ message: 'You need to pass the link query using the l parameter' }, 400)
-
-    const data = await mdn.getInfo(link)
-    if (!data) return handleJSONResponse({ message: 'The link you inputted was not valid' }, 400)
-
-    return handleJSONResponse(data)
-  })
-
-  const response = await r.route(request)
-  return response
+      return handleJSONResponse(data)
+    }
+    default: {
+      return handleJSONResponse({ message: 'Hello World!' })
+    }
+  }
 }

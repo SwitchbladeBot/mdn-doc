@@ -5,7 +5,6 @@ export default class MDN {
   public static async search (query: string) {
     const res = await fetch(`https://developer.mozilla.org/en-US/search?q=${encodeURIComponent(query)}`)
     const html = await res.text()
-    console.log(html)
     const $ = Cheerio.load(html)
 
     const results: { title: string, url: string }[] = $('div.result > div > a.result-title').map((_, e) => ({
